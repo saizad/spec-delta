@@ -12,7 +12,7 @@ inputs:
     description: Path to API diff file
     required: true
   outdir:
-    description: Output directory
+    description: Output directory (default: curl-diff-out)
     required: false
     default: curl-diff-out
 runs:
@@ -23,26 +23,13 @@ runs:
       with:
         python-version: '3.11'
     
-    - name: Cache Python dependencies
-      uses: actions/cache@v3
-      with:
-        path: venv
-        key: ${{ runner.os }}-python-${{ hashFiles('requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-python-
-    
     - name: Install dependencies
       run: |
         python3 -m venv venv
-        . venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
-      shell: bash
-    
-    - name: Verify Dependencies
-      run: |
-        . venv/bin/activate && pip list
+        . venv/bin/activate && pip install --upgrade pip && pip install -r "${{ github.action_path }}/requirements.txt"
       shell: bash
     
     - name: Run Spec Delta generator
       run: |
-        . venv/bin/activate && python generator.py "${{ inputs.openapi }}" "${{ inputs.diff }}" -o "${{ inputs.outdir }}"
+        . venv/bin/activate && python "${{ github.action_path }}/generator.py" "${{ inputs.openapi }}" "${{ inputs.diff }}" -o "${{ inputs.outdir }}"
       shell: bash
