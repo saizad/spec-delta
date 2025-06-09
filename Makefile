@@ -11,7 +11,7 @@ endif
 ifndef DIFF
 	$(error DIFF is not set. Usage: make run OPENAPI=... DIFF=...)
 endif
-	. venv/bin/activate && python generate_curl_files.py $(OPENAPI) $(DIFF) -o $(OUTDIR)
+	. venv/bin/activate && python generator.py $(OPENAPI) $(DIFF) -o $(OUTDIR)
 
 clean:
 	rm -rf $(OUTDIR)
