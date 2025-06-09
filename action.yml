@@ -12,9 +12,12 @@ inputs:
     description: Path to API diff file
     required: true
   outdir:
-    description: Output directory
+    description: Output directory for cURL files
     required: false
     default: curl-diff-out
+  markdown_outdir:
+    description: Output directory for markdown files (if not provided, markdown generation is skipped)
+    required: false
 runs:
   using: composite
   steps:
@@ -32,4 +35,10 @@ runs:
     - name: Run Spec Delta generator
       run: |
         . venv/bin/activate && python "${{ github.action_path }}/generator.py" "${{ inputs.openapi }}" "${{ inputs.diff }}" -o "${{ inputs.outdir }}"
+      shell: bash
+    
+    - name: Generate markdown from diff output
+      if: ${{ inputs.markdown_outdir != '' }}
+      run: |
+        . venv/bin/activate && python "${{ github.action_path }}/log_markdown_convertor.py" "${{ inputs.outdir }}" "${{ inputs.markdown_outdir }}"
       shell: bash
