@@ -1,0 +1,37 @@
+name: Spec Delta
+description: Generate cURL examples from OpenAPI diff
+author: Saizad
+branding:
+  icon: terminal
+  color: blue
+
+inputs:
+  openapi:
+    description: Path to OpenAPI spec file
+    required: true
+  diff:
+    description: Path to API diff file
+    required: true
+  outdir:
+    description: Output directory (default: curl-diff-out)
+    required: false
+    default: curl-diff-out
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python3 -m venv venv
+        . venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
+      shell: bash
+
+    - name: Run Spec Delta generator
+      run: |
+        . venv/bin/activate && python generate_curl_files.py "${{ inputs.openapi }}" "${{ inputs.diff }}" -o "${{ inputs.outdir }}"
+      shell: bash
