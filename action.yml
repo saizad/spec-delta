@@ -22,11 +22,26 @@ runs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+    
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: venv
+        key: ${{ runner.os }}-python-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-python-
+    
     - name: Install dependencies
       run: |
         python3 -m venv venv
         . venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
       shell: bash
+    
+    - name: Verify Dependencies
+      run: |
+        . venv/bin/activate && pip list
+      shell: bash
+    
     - name: Run Spec Delta generator
       run: |
         . venv/bin/activate && python generator.py "${{ inputs.openapi }}" "${{ inputs.diff }}" -o "${{ inputs.outdir }}"
