@@ -12,7 +12,7 @@ inputs:
     description: Path to API diff file
     required: true
   outdir:
-    description: Output directory (default: curl-diff-out)
+    description: Output directory
     required: false
     default: curl-diff-out
 runs:
