@@ -52,5 +52,5 @@ runs:
           echo "No summary file found, skipping README.md generation"
           exit 0
         fi
-        . venv/bin/activate && python "${{ github.action_path }}/summary_markdown_convertor.py" "${{ inputs.outdir }}/summary.txt" -o README.md
+        . venv/bin/activate && python "${{ github.action_path }}/summary_markdown_convertor.py" "${{ inputs.outdir }}/summary.txt" -o "${{ inputs.outdir }}/README.md"
       shell: bash
