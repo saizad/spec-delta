@@ -43,7 +43,14 @@ runs:
         . venv/bin/activate && python "${{ github.action_path }}/log_markdown_convertor.py" "${{ inputs.outdir }}" "${{ inputs.markdown_outdir }}"
       shell: bash
 
-    # - name: Generate Readme from diff output
-    #   run: |
-    #     . venv/bin/activate && python "${{ github.action_path }}/summary_markdown_convertor.py" "${{ inputs.outdir }}/summary.txt" -o README.md
-    #   shell: bash
+    - name: Generate Readme from diff output
+      run: |
+        ls -a "${{ inputs.outdir }}"
+        if [ -f "${{ inputs.outdir }}/summary.txt" ]; then
+          echo "Summary file found, proceeding to convert to README.md"
+        else
+          echo "No summary file found, skipping README.md generation"
+          exit 0
+        fi
+        . venv/bin/activate && python "${{ github.action_path }}/summary_markdown_convertor.py" "${{ inputs.outdir }}/summary.txt" -o README.md
+      shell: bash
