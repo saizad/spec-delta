@@ -43,7 +43,7 @@ runs:
         . venv/bin/activate && python "${{ github.action_path }}/log_markdown_convertor.py" "${{ inputs.outdir }}" "${{ inputs.markdown_outdir }}"
       shell: bash
 
-    - name: Generate Readme from diff output
-      run: |
-        . venv/bin/activate && python "${{ github.action_path }}/summary_markdown_convertor.py" "${{ inputs.outdir }}/summary.txt" -o README.md
-      shell: bash
+    # - name: Generate Readme from diff output
+    #   run: |
+    #     . venv/bin/activate && python "${{ github.action_path }}/summary_markdown_convertor.py" "${{ inputs.outdir }}/summary.txt" -o README.md
+    #   shell: bash
