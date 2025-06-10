@@ -897,7 +897,7 @@ the API maintainers for migration guidance.
         summary_content.append("")
 
     # Write summary file
-    summary_file = Path(output_dir) / "README.md"
+    summary_file = Path(output_dir) / "summary.txt"
     with open(summary_file, 'w', encoding='utf-8') as f:
         f.write('\n'.join(summary_content))
     
