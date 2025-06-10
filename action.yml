@@ -51,10 +51,10 @@ runs:
         . venv/bin/activate
         GITHUB_ARGS=""
         if [ -n "${{ inputs.github_url }}" ]; then
-          GITHUB_ARGS="--github-url '${{ inputs.github_url }}'"
+          GITHUB_ARGS="--github-url ${{ inputs.github_url }}"
         fi
         if [ -n "${{ inputs.branch }}" ]; then
-          GITHUB_ARGS="$GITHUB_ARGS --branch '${{ inputs.branch }}'"
+          GITHUB_ARGS="$GITHUB_ARGS --branch ${{ inputs.branch }}"
         fi
         python "${{ github.action_path }}/summary_markdown_convertor.py" "${{ inputs.outdir }}/summary.txt" -o "${{ inputs.outdir }}/README.md" $GITHUB_ARGS
       shell: bash
