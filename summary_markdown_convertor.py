@@ -5,8 +5,7 @@ API Endpoints Report Beautifier
 A professional tool to convert API endpoint summaries into beautifully formatted Markdown reports.
 Supports various customization options for professional documentation.
 
-Author: Auto-generated
-Version: 1.0.0
+
 """
 
 import argparse
@@ -52,7 +51,9 @@ class APIBeautifier:
                  group_by_category: bool = False,
                  add_timestamps: bool = True,
                  custom_title: Optional[str] = None,
-                 output_format: str = 'github'):
+                 output_format: str = 'github',
+                 github_base_url: Optional[str] = None,
+                 github_branch: str = 'main'):
         """
         Initialize the beautifier with configuration options
         
@@ -65,6 +66,8 @@ class APIBeautifier:
             add_timestamps: Add generation timestamp
             custom_title: Custom title for the report
             output_format: Output format ('github', 'gitlab', 'generic')
+            github_base_url: Base GitHub URL for hyperlinks (e.g., 'https://github.com/user/repo/blob')
+            github_branch: GitHub branch name for hyperlinks
         """
         self.include_toc = include_toc
         self.include_summary = include_summary
@@ -74,7 +77,58 @@ class APIBeautifier:
         self.add_timestamps = add_timestamps
         self.custom_title = custom_title or "API Endpoints Documentation"
         self.output_format = output_format
+        self.github_base_url = github_base_url
+        self.github_branch = github_branch
         
+    def _endpoint_to_filename(self, method: str, endpoint: str) -> str:
+        """
+        Convert HTTP method and endpoint path to filename format
+        
+        Args:
+            method: HTTP method (GET, POST, etc.)
+            endpoint: Endpoint path (e.g., /content/topics/{topic_id}/videos/upload/)
+            
+        Returns:
+            Filename string (e.g., POST__content_topics_topic_id_videos_upload.txt)
+        """
+        # Remove leading slash
+        path = endpoint.lstrip('/')
+        
+        # Replace path separators with underscores
+        path = path.replace('/', '_')
+        
+        # Replace curly braces (path parameters) with underscores
+        path = re.sub(r'[{}]', '_', path)
+        
+        # Replace other special characters with underscores
+        path = re.sub(r'[^\w]', '_', path)
+        
+        # Remove trailing underscores and clean up multiple underscores
+        path = re.sub(r'_+', '_', path).strip('_')
+        
+        # Construct filename
+        filename = f"{method}__{path}.txt"
+        
+        return filename
+    
+    def _create_endpoint_link(self, method: str, endpoint: str) -> str:
+        """
+        Create a hyperlinked endpoint or plain text if no GitHub URL provided
+        
+        Args:
+            method: HTTP method
+            endpoint: Endpoint path
+            
+        Returns:
+            Markdown formatted link or plain text
+        """
+        if self.github_base_url:
+            filename = self._endpoint_to_filename(method, endpoint)
+            full_url = f"{self.github_base_url}/{self.github_branch}/{filename}"
+            return f"[`{endpoint}`]({full_url})"
+        else:
+            return f"`{endpoint}`"
+    
     def parse_raw_text(self, raw_text: str) -> APIReport:
         """Parse raw API summary text into structured data"""
         lines = raw_text.strip().split('\n')
@@ -240,7 +294,7 @@ class APIBeautifier:
         return overview
     
     def _format_endpoint_list(self, endpoints: List[str], method: str = None) -> str:
-        """Format a list of endpoints"""
+        """Format a list of endpoints with hyperlinks"""
         if not endpoints:
             return "_No endpoints_\n\n"
             
@@ -250,9 +304,20 @@ class APIBeautifier:
         formatted = ""
         for endpoint in endpoints:
             if method:
-                formatted += f"- **`{method}`** `{endpoint}`\n"
+                # For method-specific sections, create hyperlink
+                link = self._create_endpoint_link(method, endpoint)
+                formatted += f"- **`{method}`** {link}\n"
             else:
-                formatted += f"- `{endpoint}`\n"
+                # For change sections, parse method from endpoint if present
+                method_match = re.match(r'^(GET|POST|PUT|DELETE|PATCH)\s+(.+)$', endpoint)
+                if method_match:
+                    parsed_method = method_match.group(1)
+                    parsed_path = method_match.group(2)
+                    link = self._create_endpoint_link(parsed_method, parsed_path)
+                    formatted += f"- **`{parsed_method}`** {link}\n"
+                else:
+                    # Fallback to plain text if method not found
+                    formatted += f"- `{endpoint}`\n"
         
         return formatted + "\n"
     
@@ -281,7 +346,7 @@ class APIBeautifier:
             }.get(method, '🔗')
             
             section += f"### {method_emoji} {method} ({len(endpoints)} endpoints)\n\n"
-            section += self._format_endpoint_list(endpoints)
+            section += self._format_endpoint_list(endpoints, method)
         
         return section
     
@@ -296,7 +361,7 @@ class APIBeautifier:
         else:
             section += "_No endpoints added_\n\n"
         
-        # Modified endpoints
+        # Modified endpoints  
         section += "### 🔄 Modified Endpoints\n\n"
         if report.modified_endpoints:
             section += self._format_endpoint_list(report.modified_endpoints)
@@ -320,10 +385,9 @@ class APIBeautifier:
         footer = "## 📋 Report Information\n\n"
         footer += f"- **Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
         footer += f"- **Format:** {self.output_format.title()}\n"
-        footer += "- **Tool:** API Endpoints Beautifier v1.0.0\n\n"
-        footer += "---\n\n"
-        footer += "*This documentation was automatically generated. Please verify endpoint accuracy before use.*\n"
-        
+        if self.github_base_url:
+            footer += f"- **Hyperlinks:** Enabled (Branch: {self.github_branch})\n"
+
         return footer
     
     def beautify(self, raw_text: str) -> str:
@@ -352,6 +416,7 @@ def main():
 Examples:
   python api_beautifier.py input.txt -o output.md
   python api_beautifier.py input.txt --title "My API Docs" --no-badges
+  python api_beautifier.py input.txt --github-url "https://github.com/user/repo/blob" --branch "main"
   python api_beautifier.py input.txt --format gitlab --no-toc
         """
     )
@@ -365,6 +430,12 @@ Examples:
                        help="Custom title for the documentation")
     parser.add_argument("--format", choices=["github", "gitlab", "generic"], 
                        default="github", help="Output format")
+    
+    # Hyperlink options
+    parser.add_argument("--github-url", 
+                       help="Base GitHub URL for hyperlinks (e.g., 'https://github.com/user/repo/blob')")
+    parser.add_argument("--branch", default="main",
+                       help="GitHub branch name for hyperlinks (default: main)")
     
     # Feature toggles
     parser.add_argument("--no-toc", action="store_true", 
@@ -405,7 +476,9 @@ Examples:
         group_by_category=args.group_by_category,
         add_timestamps=not args.no_timestamps,
         custom_title=args.title,
-        output_format=args.format
+        output_format=args.format,
+        github_base_url=args.github_url,
+        github_branch=args.branch
     )
     
     # Generate markdown
